@@ -1,8 +1,19 @@
 const express = require('express')
 const Joi = require('@hapi/joi');
+const morgan = require('morgan')
+const helmet = require('helmet')
+
+const logger = require('./logger');
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({extended:true})); // if data send by form urlEncode by key value then it use
+
+app.use(express.static('public'))
+app.use(morgan('tiny'))
+app.use(helmet())
+
+app.use(logger)
 
 var courses = [
     { id: 1, name: "course 1" },
@@ -32,11 +43,9 @@ app.get('/api/posts/:year/:month', (req, res) => {
 });
 
 app.get('/api/query/:year/:month', (req, res) => {
-    //http://localhost:3000/api/query/2018/10?name=mohib
     let query = req.query;
     res.send(query);
 });
-
 
 app.post('/api/courses', (req, res) => {
     const { error, value } = validateCourse(req.body)
@@ -44,16 +53,10 @@ app.post('/api/courses', (req, res) => {
     if (error) {return res.status(400).send(error.details[0].message);  }
 
     if (error !== undefined) {
-        //'Name is Required and should be minimum 3 characters.'
-        //.forEach((item,index)=>{return item.message})
         let errorInfo = error.details
         let newError = errorInfo.map(item => { return { [item.context.key]: item.message } })
-        // let newError= errorInfo.map(item=>{return item.message})
-        //let newError= errorInfo[0].message;
         return res.status(400).json(newError);
     }
-    console.log("value", value);
-    console.log("error", error);
     const course = {
         id: courses.length + 1,
         name: req.body.name
@@ -65,7 +68,6 @@ app.post('/api/courses', (req, res) => {
 app.put('/api/courses/:id', (req, res) => {
     const course = courses.find(item => item.id === parseInt(req.params.id));
     if (!course) { return res.status(404).send("The Course With given Id was Not Found") }
-
     const { error, value } = validateCourse(req.body)
 
     if (error) { return res.status(400).send(error.details[0].message); return; }
