@@ -1,7 +1,8 @@
 const express = require('express')
 const Joi = require('@hapi/joi');
-const morgan = require('morgan')
-const helmet = require('helmet')
+const morgan = require('morgan');
+const helmet = require('helmet');
+const config = require('config');
 
 const logger = require('./logger');
 
@@ -9,11 +10,22 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended:true})); // if data send by form urlEncode by key value then it use
 
-app.use(express.static('public'))
-app.use(morgan('tiny'))
-app.use(helmet())
+app.use(express.static('public'));
+app.use(helmet());
 
-app.use(logger)
+//Configuration
+console.log('Application Name : ' + config.get('name'));
+console.log('Mail Server : ' + config.get('mail.host'));
+
+//environment 
+//export NODE_ENV = development
+if (app.get('env') === "development") {
+    app.use(morgan('tiny'));
+    console.log("morgan enabled..");
+    
+};
+app.use(logger);
+
 
 var courses = [
     { id: 1, name: "course 1" },
